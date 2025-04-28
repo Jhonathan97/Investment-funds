@@ -1,0 +1,6 @@
+env/
+backend_build/
+*.zip
+__pycache__/
+node_modules/
+dist/

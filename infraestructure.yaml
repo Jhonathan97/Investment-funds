@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Infraestructura para plataforma de Fondos de Inversión.
+
+Resources:
+  # Tablas DynamoDB
+  FundTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Fund
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  TransactionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Transaction
+      AttributeDefinitions:
+        - AttributeName: transaction_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: transaction_id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  BalanceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Balance
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  # SNS Topic para Email
+  EmailNotificationsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: "Email Notifications"
+
+  # S3 Bucket para Frontend
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  # Role IAM para Lambda Backend
+  BackendExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: BackendAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                  - sns:Publish
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  # Lambda Backend
+  BackendFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BackendFondos
+      Handler: app.main.handler
+      Role: !GetAtt BackendExecutionRole.Arn
+      Runtime: python3.11
+      Timeout: 30
+      Environment:
+        Variables:
+          EMAIL_TOPIC_ARN: !Ref EmailNotificationsTopic
+      Code:
+        S3Bucket: investment-fund-backend
+        S3Key: backend-code.zip
+
+Outputs:
+  FrontendBucketURL:
+    Description: "URL pública del Frontend"
+    Value: !Sub "http://${FrontendBucket}.s3-website-${AWS::Region}.amazonaws.com"
+
+  EmailTopicARN:
+    Description: "ARN del SNS para Email"
+    Value: !Ref EmailNotificationsTopic
