@@ -14,7 +14,6 @@ Aplicación web para gestionar suscripciones y cancelaciones de fondos de invers
 - Cancelación de fondos.
 - Visualización de historial de transacciones.
 - Notificaciones por Email/SMS.
-- Frontend intuitivo y responsive.
 
 ## Esquema de Base de Datos (NoSQL)
 
