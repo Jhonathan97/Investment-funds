@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-const API_URL = "https://x7vnugl0gl.execute-api.us-east-1.amazonaws.com";
+const API_URL = "https://eg0dt0v9kl.execute-api.us-east-1.amazonaws.com/prod";
+
 
 // Obtener todos los fondos
 export async function getFund() {
-    const res = await axios.get(`${API_URL}/funds`);
+    const res = await axios.get(`${API_URL}/funds/`);
     return res.data;
 }
 

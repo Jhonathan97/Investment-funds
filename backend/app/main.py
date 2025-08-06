@@ -11,11 +11,11 @@ app = FastAPI(
 )
 
 handler = Mangum(app)
-# 🚀 Configurar CORS aquí
+#  Configurar CORS 
 origins = [
-    "http://localhost:5173",  # Para desarrollo local (React Vite)
-    "https://platform-funds-frontend-bucket.s3-website-us-east-1.amazonaws.com",  # Tu frontend real en AWS S3
-    # puedes agregar más dominios si es necesario
+    "http://localhost:5173",
+    "http://investment-funds-stack-frontendbucket-vxbxljf7dp4u.s3-website-us-east-1.amazonaws.com",
+    "https://investment-funds-stack-frontendbucket-vxbxljf7dp4u.s3-website-us-east-1.amazonaws.com",
 ]
 
 app.add_middleware(

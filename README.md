@@ -75,3 +75,14 @@ Correr script para cargar fondos y saldo inicial en DynamoDB.
 python scripts/data_loading_script.py
 ```
 
+
+## Agregar politica a bucket de S3
+
+
+```bash
+aws s3api put-bucket-policy \
+  --bucket investment-funds-stack-frontendbucket-vxbxljf7dp4u \
+  --policy file://bucket-policy.json
+
+```
+

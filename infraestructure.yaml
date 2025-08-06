@@ -100,6 +100,278 @@ Resources:
         S3Bucket: investment-fund-backend
         S3Key: backend-code.zip
 
+  # API Gateway
+  ApiGatewayRest:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: InvestmentFundsAPI
+      Description: API pública para plataforma de fondos de inversión
+
+  ApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRest.RootResourceId
+      PathPart: funds
+      RestApiId: !Ref ApiGatewayRest
+
+  ApiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: ANY
+      ResourceId: !Ref ApiGatewayResource
+      RestApiId: !Ref ApiGatewayRest
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: 
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BackendFunction.Arn}/invocations
+
+  ApiGatewayResourceHistory:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRest.RootResourceId
+      PathPart: history
+      RestApiId: !Ref ApiGatewayRest
+
+  ApiGatewayMethodHistory:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: ANY
+      ResourceId: !Ref ApiGatewayResourceHistory
+      RestApiId: !Ref ApiGatewayRest
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: 
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BackendFunction.Arn}/invocations
+
+  ApiGatewayResourceFundsProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ParentId: !Ref ApiGatewayResource
+      PathPart: "{proxy+}"
+
+  ApiGatewayMethodFundsProxy:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayResourceFundsProxy
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BackendFunction.Arn}/invocations
+
+  ApiGatewayRootProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ParentId: !GetAtt ApiGatewayRest.RootResourceId
+      PathPart: "{proxy+}"
+
+  ApiGatewayRootProxyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayRootProxy
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BackendFunction.Arn}/invocations
+  
+  ApiGatewayRootProxyOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayRootProxy
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+            ResponseTemplates:
+              application/json: "{}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  ApiGatewayFundsProxyOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayResourceFundsProxy
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+            ResponseTemplates:
+              application/json: "{}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  ApiGatewayFundsOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayResource 
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+            ResponseTemplates:
+              application/json: "{}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  ApiGatewayResourceFundsSubscribe:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref ApiGatewayResource
+      PathPart: subscribe
+      RestApiId: !Ref ApiGatewayRest
+
+  ApiGatewayMethodFundsSubscribeOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayResourceFundsSubscribe
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+            ResponseTemplates:
+              application/json: "{}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  ApiGatewayMethodFundsSubscribe:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayResourceFundsSubscribe
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BackendFunction.Arn}/invocations
+
+
+  # Permisos para la API Gateway
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BackendFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: 
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRest}/*/*/*
+
+
+  # SNS Subscription
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: jhonathan0297@gmail.com
+      TopicArn: !Ref EmailNotificationsTopic
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: 
+      - ApiGatewayMethod
+      - ApiGatewayMethodHistory
+      - ApiGatewayMethodFundsProxy
+      - ApiGatewayMethodHistoryProxy
+      - ApiGatewayRootProxyMethod
+      - ApiGatewayRootProxyOptions
+      - ApiGatewayFundsProxyOptions
+      - ApiGatewayFundsOptions
+      - ApiGatewayResourceFundsSubscribe
+      - ApiGatewayMethodFundsSubscribeOptions
+      - ApiGatewayMethodFundsSubscribe
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      StageName: prod
+
+  # Recurso proxy para /history/{proxy+}
+  ApiGatewayResourceHistoryProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ParentId: !Ref ApiGatewayResourceHistory
+      PathPart: "{proxy+}"
+
+  # Método ANY para /history/{proxy+}
+  ApiGatewayMethodHistoryProxy:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRest
+      ResourceId: !Ref ApiGatewayResourceHistoryProxy
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BackendFunction.Arn}/invocations
+
 Outputs:
   FrontendBucketURL:
     Description: "URL pública del Frontend"
@@ -108,3 +380,8 @@ Outputs:
   EmailTopicARN:
     Description: "ARN del SNS para Email"
     Value: !Ref EmailNotificationsTopic
+
+  ApiGatewayURL:
+    Description: "URL pública de la API Gateway"
+    Value: 
+      Fn::Sub: https://${ApiGatewayRest}.execute-api.${AWS::Region}.amazonaws.com/prod/funds
